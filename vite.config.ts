@@ -5,7 +5,14 @@ import path from "path";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
+// GitHub Pages serves project sites at https://user.github.io/<repo>/, so the
+// Vite base must match or every built asset URL 404s (white screen). Default
+// stays "/" for the Freebuff preview; when publishing to GitHub Pages, build
+// with BASE_PATH=/repo-name/ (see README deploy note).
+const base = process.env.BASE_PATH || "/";
+
 export default defineConfig({
+  base,
   plugins: [react(), vlyPlugin(), tailwindcss()],
   resolve: {
     alias: {
