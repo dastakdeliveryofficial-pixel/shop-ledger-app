@@ -116,18 +116,19 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       {/* Auth Content */}
       <div className="flex-1 flex items-center justify-center">
         <div className="flex items-center justify-center h-full flex-col">
-        <Card className="min-w-[350px] border-border/70 pb-0 shadow-none">
+        <Card className="min-w-[350px] border-border/70 bg-card/60 pb-0 shadow-none backdrop-blur">
           {step === "signIn" ? (
             <>
               <CardHeader className="text-center">
               <div className="flex justify-center">
-                    <span className="mb-4 mt-4 flex size-14 cursor-pointer items-center justify-center rounded-md bg-foreground text-background" onClick={() => navigate("/")}>
+                    <span className="mb-4 mt-4 flex size-14 cursor-pointer items-center justify-center rounded-md border border-border/70 bg-background" onClick={() => navigate("/")}>
                       <BookOpenText className="size-6" strokeWidth={1.75} />
                     </span>
                   </div>
-                <CardTitle className="text-xl font-medium tracking-tight">KhataBook Lite</CardTitle>
+                <CardTitle className="text-xl font-medium tracking-tight">Mahboob Home Mart</CardTitle>
                 <CardDescription>
-                  Enter your email to log in or sign up
+                  Sign in with your email — shop staff land on the ledger
+                  console, customers on their personal dashboard.
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleEmailSubmit}>
@@ -272,8 +273,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
             </>
           )}
 
-          <div className="rounded-b-lg border-t bg-muted/40 px-6 py-4 text-center text-xs text-muted-foreground">
-            KhataBook Lite · a calm ledger for busy shops
+          <div className="rounded-b-lg border-t bg-muted/30 px-6 py-4 text-center text-xs text-muted-foreground">
+            Mahboob Home Mart · Ledger Portal
           </div>
         </Card>
         </div>

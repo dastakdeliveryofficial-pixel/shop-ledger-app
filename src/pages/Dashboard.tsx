@@ -74,9 +74,7 @@ export default function Dashboard() {
         {/* Heading + primary actions */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Daily ledger
-            </p>
+            <p className="label-tech">Daily ledger</p>
             <h1 className="mt-1.5 text-2xl font-medium tracking-tight sm:text-3xl">
               {(() => {
                 const h = new Date().getHours();
@@ -149,9 +147,7 @@ export default function Dashboard() {
         {/* Search + customer list */}
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Customers
-            </h2>
+            <h2 className="label-tech">Customers</h2>
             <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -249,10 +245,7 @@ export default function Dashboard() {
         </section>
 
         {/* Today's ledger */}
-        <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Today&apos;s entries
-          </h2>
+        <section className="flex flex-col gap-4">            <h2 className="label-tech">Today's entries</h2>
           {todaysLedger === undefined ? (
             <div className="flex items-center justify-center rounded-xl border border-dashed py-12 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
@@ -338,12 +331,12 @@ function StatTile({
   sub?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1 bg-background p-4 sm:p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="flex flex-col gap-1 bg-card/60 p-4 sm:p-5">
+      <div className="flex items-center gap-2">
         {icon}
-        <span className="text-xs uppercase tracking-[0.14em]">{label}</span>
+        <span className="label-tech">{label}</span>
       </div>
-      <div className="mt-1 text-xl font-medium tabular-nums tracking-tight sm:text-2xl">
+      <div className="tnum mt-1 text-xl font-medium tracking-tight sm:text-2xl">
         {value}
       </div>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}

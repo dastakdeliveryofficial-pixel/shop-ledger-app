@@ -3,29 +3,26 @@ import {
   TransactionDialog,
 } from "@/components/ledger/dialogs";
 import { LedgerShell } from "@/components/ledger/LedgerShell";
+import { LedgerTimeline } from "@/components/ledger/LedgerTimeline";
+import { MessageThread } from "@/components/ledger/MessageThread";
 import { WhatsAppDialog } from "@/components/ledger/WhatsAppDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  formatDate,
-  formatCurrency,
-  formatDateTime,
-  sessionIcon,
-} from "@/lib/ledger";
+import { formatCurrency } from "@/lib/ledger";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowDownToLine,
+  Archive,
+  ArchiveRestore,
   ChevronLeft,
   Loader2,
+  Mail,
   MapPin,
   MessageCircle,
   NotebookPen,
   Pencil,
-  Trash2,
-  Archive,
-  ArchiveRestore,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -46,7 +43,7 @@ export default function CustomerDetail() {
   const removeTx = useMutation(api.transactions.remove);
   const archiveCustomer = useMutation(api.customers.archive);
 
-  if (customer === undefined || txs === undefined) {
+  if (customer === undefined) {
     return (
       <LedgerShell>
         <div className="flex items-center justify-center py-32 text-muted-foreground">
@@ -70,7 +67,6 @@ export default function CustomerDetail() {
   }
 
   const ledger = txs ?? [];
-
   const creditTotal = ledger
     .filter((t) => t.direction === "credit")
     .reduce((s, t) => s + t.amount, 0);
@@ -78,29 +74,6 @@ export default function CustomerDetail() {
     .filter((t) => t.direction === "payment")
     .reduce((s, t) => s + t.amount, 0);
   const balance = Math.round((creditTotal - paidTotal) * 100) / 100;
-
-  // Group ledger entries by local day, newest first (ledger is desc).
-  const groups: {
-    key: string;
-    label: string;
-    entries: typeof ledger;
-  }[] = [];
-  for (const t of ledger) {
-    const key = new Date(t.occurredAt).toDateString();
-    const last = groups[groups.length - 1];
-    if (last && last.key === key) {
-      last.entries.push(t);
-    } else {
-      groups.push({
-        key,
-        label:
-          key === new Date().toDateString()
-            ? "Today"
-            : formatDate(t.occurredAt),
-        entries: [t],
-      });
-    }
-  }
 
   const handleDeleteTx = async (txId: Id<"transactions">) => {
     try {
@@ -152,33 +125,40 @@ export default function CustomerDetail() {
                   </Badge>
                 )}
               </div>
-              <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+              <p className="tnum mt-1 text-sm text-muted-foreground">
                 {customer.phone}
               </p>
+              {customer.email ? (
+                <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Mail className="size-3.5 shrink-0" />
+                  {customer.email}
+                </p>
+              ) : null}
               {customer.address ? (
                 <p className="mt-0.5 flex items-start gap-1.5 text-sm text-muted-foreground">
                   <MapPin className="mt-0.5 size-3.5 shrink-0" />
                   <span className="max-w-md">{customer.address}</span>
                 </p>
               ) : null}
-              {customer.note ? (
-                <p className="mt-2 flex items-start gap-1.5 text-sm italic text-muted-foreground">
-                  <NotebookPen className="mt-0.5 size-3.5 shrink-0" />
-                  {customer.note}
-                </p>
-              ) : null}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)} aria-label="Edit customer">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditOpen(true)}
+              aria-label="Edit customer"
+            >
               <Pencil className="size-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleToggleArchive}
-              aria-label={customer.archived ? "Restore account" : "Archive account"}
+              aria-label={
+                customer.archived ? "Restore account" : "Archive account"
+              }
             >
               {customer.archived ? (
                 <ArchiveRestore className="size-4" />
@@ -203,139 +183,37 @@ export default function CustomerDetail() {
 
         {/* Balance strip */}
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border/70 bg-border/70 sm:grid-cols-3">
-          <div className="bg-background p-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Outstanding balance
-            </p>
-            <p className="mt-1.5 text-2xl font-medium tabular-nums tracking-tight">
-              {formatCurrency(balance)}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {balance > 0
+          <BalanceTile
+            label="Outstanding balance"
+            value={formatCurrency(balance)}
+            sub={
+              balance > 0
                 ? "Customer owes the shop"
                 : balance < 0
                   ? "Advance with the shop"
-                  : "Fully settled"}
-            </p>
-          </div>
-          <div className="bg-background p-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Total credit taken
-            </p>
-            <p className="mt-1.5 text-2xl font-medium tabular-nums tracking-tight">
-              {formatCurrency(creditTotal)}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Lifetime purchases on credit
-            </p>
-          </div>
-          <div className="bg-background p-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Total repaid
-            </p>
-            <p className="mt-1.5 text-2xl font-medium tabular-nums tracking-tight">
-              {formatCurrency(paidTotal)}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Payments received so far
-            </p>
-          </div>
+                  : "Fully settled"
+            }
+          />
+          <BalanceTile
+            label="Total credit taken"
+            value={formatCurrency(creditTotal)}
+            sub="Lifetime purchases on credit"
+          />
+          <BalanceTile
+            label="Total repaid"
+            value={formatCurrency(paidTotal)}
+            sub="Payments received so far"
+          />
         </div>
 
         {/* Ledger */}
-        <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Ledger history
-          </h2>
-          {groups.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-              <p className="text-sm font-medium">No entries yet</p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Record the first credit or cash entry for this account.
-              </p>
-              <Button variant="outline" onClick={() => setTxDialog("credit")}>
-                <NotebookPen className="size-4" />
-                New entry
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border/70">
-              {groups.map((g) => (
-                <div key={g.key}>
-                  <div className="border-b border-border/70 bg-muted/40 px-4 py-2 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground sm:px-5">
-                    {g.label}
-                  </div>
-                  <ul className="divide-y divide-border/70">
-                    {g.entries.map((t) => (
-                      <li
-                        key={t._id}
-                        className="group flex items-start gap-3 px-4 py-3.5 sm:px-5"
-                      >
-                        <div className="w-24 shrink-0">
-                          <p className="text-xs tabular-nums text-muted-foreground">
-                            {formatDateTime(t.occurredAt)}
-                          </p>
-                          {t.session ? (
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {sessionIcon(t.session)} {t.session}
-                            </p>
-                          ) : null}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm">
-                            <span className="font-medium">
-                              {t.direction === "payment"
-                                ? "Payment received"
-                                : t.kind === "cash"
-                                  ? "Cash purchase"
-                                  : "Credit purchase"}
-                            </span>
-                            {t.collectorName ? (
-                              <span className="text-muted-foreground">
-                                {" "}
-                                · {t.collectorName}
-                                {t.collectorRelation
-                                  ? ` (${t.collectorRelation})`
-                                  : ""}
-                              </span>
-                            ) : null}
-                          </p>
-                          {t.items ? (
-                            <p className="mt-0.5 text-sm text-muted-foreground">
-                              {t.items}
-                            </p>
-                          ) : null}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <span
-                            className={
-                              "text-sm font-medium tabular-nums " +
-                              (t.direction === "credit"
-                                ? "text-foreground"
-                                : "text-muted-foreground")
-                            }
-                          >
-                            {t.direction === "credit" ? "+" : "−"}
-                            {formatCurrency(t.amount)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                            aria-label="Delete entry"
-                            onClick={() => handleDeleteTx(t._id)}
-                          >
-                            <Trash2 className="size-3.5 text-muted-foreground" />
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <LedgerTimeline
+          txs={ledger}
+          onDelete={handleDeleteTx}
+        />
+
+        {/* Messages */}
+        <MessageThread customerId={customer._id} role="shop" />
       </div>
 
       <CustomerDialog
@@ -344,6 +222,7 @@ export default function CustomerDetail() {
         initial={{
           id: customer._id,
           name: customer.name,
+          email: customer.email,
           phone: customer.phone,
           address: customer.address,
           note: customer.note,
@@ -368,5 +247,23 @@ export default function CustomerDetail() {
         shopName={settings?.shopName}
       />
     </LedgerShell>
+  );
+}
+
+function BalanceTile({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className="bg-card/60 p-5">
+      <p className="label-tech">{label}</p>
+      <p className="tnum mt-1.5 text-2xl font-medium tracking-tight">{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+    </div>
   );
 }

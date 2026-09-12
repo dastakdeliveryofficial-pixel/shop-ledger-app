@@ -94,7 +94,7 @@ export function buildStatementMessage(
   txs: StatementTx[],
   options: StatementOptions = {},
 ): string {
-  const shop = options.shopName?.trim() || "our shop";
+  const shop = options.shopName?.trim() || "Mahboob Home Mart";
   const days = options.days ?? 14;
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
@@ -142,7 +142,7 @@ export function buildReminderMessage(
   balance: number,
   options: StatementOptions = {},
 ): string {
-  const shop = options.shopName?.trim() || "our shop";
+  const shop = options.shopName?.trim() || "Mahboob Home Mart";
   return [
     `Hello ${customerName},`,
     "",

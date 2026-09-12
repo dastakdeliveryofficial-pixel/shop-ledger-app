@@ -41,6 +41,7 @@ export function CustomerDialog({
   initial?: {
     id: Id<"customers">;
     name: string;
+    email?: string;
     phone: string;
     address: string;
     note?: string;
@@ -51,6 +52,7 @@ export function CustomerDialog({
   const updateCustomer = useMutation(api.customers.update);
   const [form, setForm] = useState({
     name: initial?.name ?? "",
+    email: initial?.email ?? "",
     phone: initial?.phone ?? "",
     address: initial?.address ?? "",
     note: initial?.note ?? "",
@@ -61,6 +63,7 @@ export function CustomerDialog({
     if (open) {
       setForm({
         name: initial?.name ?? "",
+        email: initial?.email ?? "",
         phone: initial?.phone ?? "",
         address: initial?.address ?? "",
         note: initial?.note ?? "",
@@ -84,6 +87,7 @@ export function CustomerDialog({
         await updateCustomer({
           id: initial.id,
           name: form.name,
+          email: form.email,
           phone: form.phone,
           address: form.address,
           note: form.note || undefined,
@@ -94,6 +98,7 @@ export function CustomerDialog({
       } else {
         const id = await createCustomer({
           name: form.name,
+          email: form.email || undefined,
           phone: form.phone,
           address: form.address,
           note: form.note || undefined,
@@ -117,7 +122,8 @@ export function CustomerDialog({
             {initial ? "Edit customer" : "New customer account"}
           </DialogTitle>
           <DialogDescription>
-            The account holder is the person responsible for settling dues.
+            The account holder is the person responsible for settling the
+            account. An email address lets them sign in to their own portal.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -131,6 +137,18 @@ export function CustomerDialog({
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Mahboob"
               autoFocus
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cust-email" className={labelClass}>
+              Email <span className="normal-case">(for their portal sign-in)</span>
+            </Label>
+            <Input
+              id="cust-email"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="e.g. customer@example.com"
+              type="email"
             />
           </div>
           <div className="grid gap-1.5">

@@ -8,6 +8,11 @@ import {
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
+export function normalizeEmail(raw?: string): string | undefined {
+  const email = raw?.trim().toLowerCase();
+  return email || undefined;
+}
+
 async function requireUser(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
   if (userId === null) {
@@ -107,6 +112,7 @@ export const get = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    email: v.optional(v.string()),
     phone: v.string(),
     address: v.string(),
     note: v.optional(v.string()),
@@ -119,11 +125,24 @@ export const create = mutation({
     if (phone.replace(/\D/g, "").length < 7) {
       throw new Error("Enter a valid phone number (at least 7 digits)");
     }
+    const email = normalizeEmail(args.email);
+    if (email) {
+      const existing = await ctx.db
+        .query("customers")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .first();
+      if (existing && existing.userId !== userId) {
+        throw new Error(
+          "That email is already linked to another shop's account",
+        );
+      }
+    }
     const id = await ctx.db.insert("customers", {
       userId,
       name,
       phone,
       address: args.address.trim(),
+      email,
       note: args.note?.trim() || undefined,
     });
     return id;
@@ -134,6 +153,7 @@ export const update = mutation({
   args: {
     id: v.id("customers"),
     name: v.optional(v.string()),
+    email: v.optional(v.string()),
     phone: v.optional(v.string()),
     address: v.optional(v.string()),
     note: v.optional(v.string()),
@@ -146,6 +166,7 @@ export const update = mutation({
     }
     const patch: Partial<{
       name: string;
+      email: string | undefined;
       phone: string;
       address: string;
       note: string | undefined;
@@ -163,6 +184,19 @@ export const update = mutation({
       patch.phone = phone;
     }
     if (args.address !== undefined) patch.address = args.address.trim();
+    if (args.email !== undefined) {
+      const email = normalizeEmail(args.email);
+      if (email) {
+        const existing = await ctx.db
+          .query("customers")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .first();
+        if (existing && existing._id !== args.id) {
+          throw new Error("That email is already linked to another account");
+        }
+      }
+      patch.email = email;
+    }
     if (args.note !== undefined) patch.note = args.note.trim() || undefined;
     await ctx.db.patch(args.id, patch);
   },
@@ -258,4 +292,40 @@ export const stats = query({
       ).length,
     };
   },
+});
+
+// Customer-facing portal lookup: finds the account matching the signed-in
+// user's email. Returns null when the signed-in user is not a customer.
+export const myAccount = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return null;
+    const user = await ctx.db.get(userId);
+    const email = user?.email?.trim().toLowerCase();
+    if (!email) return null;
+    const customer = await ctx.db
+      .query("customers")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (!customer) return null;
+    const txs = await ctx.db
+      .query("transactions")
+      .withIndex("by_customer", (q) => q.eq("customerId", customer._id))
+      .collect();
+    const creditTotal = txs
+      .filter((t) => t.direction === "credit")
+      .reduce((s, t) => s + t.amount, 0);
+    const paidTotal = txs
+      .filter((t) => t.direction === "payment")
+      .reduce((s, t) => s + t.amount, 0);
+    const lastAt = txs.reduce((m, t) => Math.max(m, t.occurredAt), 0);
+    return {
+      customer: { ...customer, email: customer.email ?? null },
+      balance: Math.round((creditTotal - paidTotal) * 100) / 100,
+      creditTotal,
+      paidTotal,
+      entryCount: txs.length,
+      lastActivityAt: lastAt || null,
+    };}
 });

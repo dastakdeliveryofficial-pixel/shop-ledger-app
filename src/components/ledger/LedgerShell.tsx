@@ -33,15 +33,15 @@ export function LedgerShell({
             onClick={() => navigate("/dashboard")}
             className="flex min-w-0 items-center gap-2.5 text-left"
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card">
               <BookOpenText className="size-4" strokeWidth={1.75} />
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-medium leading-tight">
-                {shopName || "Shop Ledger"}
+                {shopName || "Mahboob Home Mart"}
               </span>
-              <span className="block truncate text-xs text-muted-foreground leading-tight">
-                Digital khata
+              <span className="label-tech block truncate leading-tight">
+                Ledger console
               </span>
             </span>
           </button>
@@ -74,7 +74,11 @@ export function LedgerShell({
       <main className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6">
         {children}
       </main>
-      <ShopNameDialog open={shopDialog} onOpenChange={setShopDialog} current={shopName} />
+      <ShopNameDialog
+        open={shopDialog}
+        onOpenChange={setShopDialog}
+        current={shopName}
+      />
     </div>
   );
 }

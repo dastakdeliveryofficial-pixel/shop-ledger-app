@@ -40,11 +40,13 @@ const schema = defineSchema(
       name: v.string(), // primary account holder (e.g. "Mahboob")
       phone: v.string(), // primary phone number for WhatsApp reminders
       address: v.string(),
+      email: v.optional(v.string()), // lets the customer sign in to their own portal dashboard
       note: v.optional(v.string()),
       archived: v.optional(v.boolean()),
     })
       .index("by_user", ["userId"])
-      .index("by_user_and_archived", ["userId", "archived"]),
+      .index("by_user_and_archived", ["userId", "archived"])
+      .index("by_email", ["email"]),
 
     // Every credit / cash entry recorded in the daily ledger.
     transactions: defineTable({
@@ -63,6 +65,14 @@ const schema = defineSchema(
       .index("by_customer", ["customerId"])
       .index("by_customer_and_time", ["customerId", "occurredAt"])
       .index("by_user_and_time", ["userId", "occurredAt"]),
+
+    // Messages between a customer and the shop.
+    messages: defineTable({
+      customerId: v.id("customers"),
+      senderRole: v.union(v.literal("customer"), v.literal("shop")),
+      senderName: v.string(),
+      body: v.string(),
+    }).index("by_customer", ["customerId"]),
 
     // Single-row-per-user settings (shop name used on statements).
     settings: defineTable({
