@@ -6,7 +6,7 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { HashRouter, Route, Routes, useLocation } from "react-router"; // BrowserRouter ki jagah HashRouter
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -43,7 +43,7 @@ class ToolbarErrorBoundary extends React.Component<
   }
 }
 
-/** Hard guard so runtime errors never leave the preview as a blank page. */
+/** Hard guard so runtime errors never leave the preview as a blank page.[cite: 29] */
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; message: string; stack: string }
@@ -84,8 +84,8 @@ class RootErrorBoundary extends React.Component<
 /**
  * Resolve the Convex deployment URL at build time, with an optional runtime
  * override (useful for static hosting where you cannot rebuild:
- * localStorage.setItem("convex-url", "https://…convex.cloud")).
- * Missing URL previously crashed the whole module → white screen.
+ * localStorage.setItem("convex-url", "https://…convex.cloud")).[cite: 29]
+ * Missing URL previously crashed the whole module → white screen.[cite: 29]
  */
 function resolveConvexUrl(): string | undefined {
   const fromEnv = import.meta.env.VITE_CONVEX_URL as string | undefined;
@@ -121,8 +121,6 @@ function ConvexNotConfigured() {
   );
 }
 
-
-
 function RouteSyncer() {
   const location = useLocation();
   useEffect(() => {
@@ -146,9 +144,8 @@ function RouteSyncer() {
   return null;
 }
 
-
 const routes = (
-  <BrowserRouter>
+  <HashRouter> {/* BrowserRouter ki jagah HashRouter */}
     <RouteSyncer />
     <Suspense fallback={<RouteLoading />}>
       <Routes>
@@ -176,7 +173,7 @@ const routes = (
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
-  </BrowserRouter>
+  </HashRouter>
 );
 
 createRoot(document.getElementById("root")!).render(
