@@ -6,13 +6,19 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 // GitHub Pages serves project sites at https://user.github.io/<repo>/, so the
-// Vite base must match or every built asset URL 404s (white screen). Default
-// stays "/" for the Freebuff preview; when publishing to GitHub Pages, build
-// with BASE_PATH=/repo-name/ (see README deploy note).
-const base = process.env.BASE_PATH || "/";
+// Vite base must match or every built asset URL 404s (white screen).
+// Agar GitHub environment me BASE_PATH set nahi hai, toh repository name ya "/" use hoga.
+const getBase = () => {
+  if (process.env.BASE_PATH) {
+    return process.env.BASE_PATH;
+  }
+  // Agar aap GitHub Pages par hain aur repository ka naam pata hai, 
+  // toh aap yahan direct "/repository-name/" bhi likh sakte hain.
+  return "/";
+};
 
 export default defineConfig({
-  base,
+  base: getBase(),
   plugins: [react(), vlyPlugin(), tailwindcss()],
   resolve: {
     alias: {
